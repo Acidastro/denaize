@@ -1,5 +1,6 @@
 import shutil
 
+import uvicorn
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,13 +18,12 @@ app.add_middleware(
 
 
 @app.post("/")
-async def upload_file(
+async def upload_excel_file(
         file: UploadFile,
         daily_aggregated_filename: str = "daily_aggregated",
         by_average_filename: str = "by_average",
         sheet_name: str = 'Шахматка_Часть 1',
-        n_rows: int = 20,
-        well_number: int = 101,
+        n_rows: int = None,
 ):
     try:
         # names
@@ -42,12 +42,13 @@ async def upload_file(
             by_average_filename,
             sheet_name,
             n_rows,
-            well_number,
         )
 
     except Exception as e:
+        print(e)
         return e
     return response_zip(filenames=[
         daily_aggregated_filename, by_average_filename])
+
 
 # http://localhost:8000/docs
