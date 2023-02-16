@@ -1,5 +1,3 @@
-import shutil
-
 import uvicorn
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,25 +22,29 @@ async def upload_excel_file(
         by_average_filename: str = "by_average",
         sheet_name: str = 'Шахматка_Часть 1',
         n_rows: int = None,
+        list_wells: list = None,
 ):
     try:
         # names
         daily_aggregated_filename += ".xlsx"
         by_average_filename += ".xlsx"
 
-        # upload and save file
-        with open(file.filename, 'wb') as f:
-            file_name = file.filename
-            shutil.copyfileobj(file.file, f)
+        # file to bytes
+        file_name = file.filename
+        contents = file.file.read()
 
         # create 2 new file
-        create_files(
+        res = create_files(
+            contents,
             file_name,
             daily_aggregated_filename,
             by_average_filename,
             sheet_name,
             n_rows,
+            list_wells,
         )
+        if isinstance(res, str):
+            return res
 
     except Exception as e:
         print(e)
@@ -52,3 +54,6 @@ async def upload_excel_file(
 
 
 # http://localhost:8000/docs
+
+if __name__ == '__main__':
+    uvicorn.run(app, host='127.0.0.1', port=8000)
