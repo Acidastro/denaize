@@ -1,5 +1,4 @@
 import io
-import os
 import zipfile
 
 import numpy as np
@@ -41,8 +40,8 @@ def _get_dataframe_from_bytes(
 ):
     """
     DataFrame from xlsx or xls or csv
-    :param contents:
-    :param list_wells:
+    :param contents: byte строка файла
+    :param list_wells: список скважин
     :param str file_name: file for dataframe
     :param str sheet_name: for Excel file
     :param int n_rows: for cut
@@ -62,6 +61,12 @@ def _get_dataframe_from_bytes(
         e = f'Неверный формат файла {file_name}'
         logger.exception(e)
         return e
+
+    df['Скважина'] = df['Скважина'].astype(str)
+
+    if list_wells is not None:
+        df = df[df['Скважина'].isin(list_wells)]
+
     return df
 
 
@@ -106,8 +111,6 @@ def create_files(
     )
     if isinstance(df, str):
         return df
-
-    df['Скважина'] = df['Скважина'].astype(str)
 
     # create df_well
     df_well = _create_df_well(df, file_name)

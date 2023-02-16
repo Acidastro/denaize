@@ -18,16 +18,16 @@ app.add_middleware(
 @app.post("/")
 async def upload_excel_file(
         file: UploadFile,
-        daily_aggregated_filename: str = "daily_aggregated",
-        by_average_filename: str = "by_average",
+        daily_aggregated_filename: str = 'daily_aggregated',
+        by_average_filename: str = 'by_average',
         sheet_name: str = 'Шахматка_Часть 1',
         n_rows: int = None,
         list_wells: list = None,
 ):
     try:
         # names
-        daily_aggregated_filename += ".xlsx"
-        by_average_filename += ".xlsx"
+        daily_aggregated_filename += '.xlsx'
+        by_average_filename += '.xlsx'
 
         # file to bytes
         file_name = file.filename
