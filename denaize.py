@@ -10,6 +10,28 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from logger_conf import logger
 
 
+def create_df_well(df, file_name):
+    """
+    :param df: Исходный DataFrame
+    :param file_name: Имя исходного файла
+    :return: DataFrame с индексом типа DatetimeIndex
+    """
+    df_well = df[['Дата замера', 'Обводненность(объемная)', 'Скважина']]
+    if file_name.endswith('csv'):
+        df_well['Дата замера'] = pd.to_datetime(df['Дата замера'], utc=True)
+
+    df_well.set_index('Дата замера', inplace=True)
+    df_well['Month'] = df_well.index.month
+    df_well['Y-m'] = df_well.index.year
+    df_well['Y-m'] = df_well['Y-m'].astype(str) + '-' + \
+                     df_well['Month'].astype(str)
+
+    # убираем привязку к UTC из индекса
+    df_well.index = df_well.index.tz_localize(None)
+
+    return df_well
+
+
 def get_dataframe_from_bytes(
         contents,
         file_name,
@@ -18,7 +40,7 @@ def get_dataframe_from_bytes(
         list_wells=None,
 ):
     """
-    DataFrame from xlsx or csv
+    DataFrame from xlsx or xls or csv
     :param contents:
     :param list_wells:
     :param str file_name: file for dataframe
@@ -33,8 +55,8 @@ def get_dataframe_from_bytes(
         )
     elif file_name.endswith('.csv'):
         df = pd.read_csv(
-            file_name,
-            nrows=n_rows,
+            io.BytesIO(contents),
+            nrows=n_rows
         )
     else:
         e = f'Неверный формат файла {file_name}'
@@ -92,14 +114,8 @@ def create_files(
     df['Скважина'] = df['Скважина'].astype(str)
 
     # create df_well
-    df_well = df[['Дата замера', 'Обводненность(объемная)', 'Скважина']]
-    df_well.set_index('Дата замера', inplace=True)
-    df_well['Month'] = df_well.index.month
-    df_well['Y-m'] = df_well.index.year
-    df_well['Y-m'] = df_well['Y-m'].astype(str) + '-' + \
-                     df_well['Month'].astype(str)
+    df_well = create_df_well(df, file_name)
 
-    list_wells = df_well['Скважина'].unique()
     # Для каждой скважины отдельно просчитываем seasonal_decompose
     res_df_well = df_well.groupby('Скважина').apply(decompose_wells)
 
