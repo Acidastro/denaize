@@ -10,7 +10,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from logger_conf import logger
 
 
-def create_df_well(df, file_name):
+def _create_df_well(df, file_name):
     """
     :param df: Исходный DataFrame
     :param file_name: Имя исходного файла
@@ -32,7 +32,7 @@ def create_df_well(df, file_name):
     return df_well
 
 
-def get_dataframe_from_bytes(
+def _get_dataframe_from_bytes(
         contents,
         file_name,
         sheet_name=None,
@@ -65,7 +65,7 @@ def get_dataframe_from_bytes(
     return df
 
 
-def decompose_wells(df_well):
+def _decompose_wells(df_well):
     """
     Добавляет колонку trend_sesonialclean
     :param df_well: DataFrame, в котором индексы (Y-m-d)
@@ -83,8 +83,6 @@ def decompose_wells(df_well):
 def create_files(
         contents,
         file_name,
-        daily_aggregated_filename,
-        by_average_filename,
         sheet_name=None,
         n_rows=None,
         list_wells=None,
@@ -97,11 +95,9 @@ def create_files(
     :param int n_rows: количество считываемых строк
     :param str sheet_name: имя страницы
     :param str file_name: полное имя полученного файла с форматом
-    :param str daily_aggregated_filename: имя первого файла
-    :param str by_average_filename: имя второго файла
     """
     # Get DataFrame
-    df = get_dataframe_from_bytes(
+    df = _get_dataframe_from_bytes(
         contents,
         file_name,
         sheet_name,
@@ -114,34 +110,54 @@ def create_files(
     df['Скважина'] = df['Скважина'].astype(str)
 
     # create df_well
-    df_well = create_df_well(df, file_name)
+    df_well = _create_df_well(df, file_name)
 
     # Для каждой скважины отдельно просчитываем seasonal_decompose
-    res_df_well = df_well.groupby('Скважина').apply(decompose_wells)
+    res_df_well = df_well.groupby('Скважина').apply(_decompose_wells)
 
     # Найти средние значения по дате
     by_average = res_df_well.groupby('Y-m').apply(
         lambda x: x['trend_sesonialclean'].mean())
 
-    # to Excel
-    by_average.to_excel(by_average_filename)
-    res_df_well.to_excel(daily_aggregated_filename)
+    # to Byte Excel
+    res = [_to_bytes_excel(x) for x in [by_average, res_df_well]]
 
-    return True
+    return res
 
 
-def response_zip(filenames: list):
-    zip_filename = 'archive.zip'
+def _to_bytes_excel(df):
+    """
+    Сделает байт-строку Excel файла из DataFrame
+    :param df: DataFrame
+    :return: bytes
+    """
+    with io.BytesIO() as buffer:
+        with pd.ExcelWriter(buffer) as writer:
+            df.to_excel(writer)
+        excel_bytes = buffer.getvalue()
+        return excel_bytes
 
-    s = io.BytesIO()
-    with zipfile.ZipFile(s, 'w') as zf:
-        for fpath in filenames:
-            fdir, f_name = os.path.split(fpath)
-            zf.write(fpath, f_name)
 
-    resp = Response(
-        s.getvalue(), media_type='application/x-zip-compressed',
-        headers={
-            'Content-Disposition': f'attachment;filename={zip_filename}'
-        })
-    return resp
+def response_zip(files, filenames):
+    """
+    Сделает байт-строку zip-файла, внутри которого байт строки других файлов
+    :param list files:
+    :param list filenames:
+    :return: Response
+    """
+    try:
+        zip_filename = 'archive.zip'
+
+        s = io.BytesIO()
+        with zipfile.ZipFile(s, 'w') as zf:
+            for file, filename in zip(files, filenames):
+                zf.writestr(filename, file)
+
+        resp = Response(
+            s.getvalue(), media_type='application/x-zip-compressed',
+            headers={
+                'Content-Disposition': f'attachment;filename={zip_filename}'
+            })
+        return resp
+    except Exception as e:
+        logger.exception(e)

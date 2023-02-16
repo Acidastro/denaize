@@ -37,8 +37,6 @@ async def upload_excel_file(
         res = create_files(
             contents,
             file_name,
-            daily_aggregated_filename,
-            by_average_filename,
             sheet_name,
             n_rows,
             list_wells,
@@ -49,8 +47,13 @@ async def upload_excel_file(
     except Exception as e:
         print(e)
         return e
-    return response_zip(filenames=[
-        daily_aggregated_filename, by_average_filename])
+    return response_zip(
+        files=res,
+        filenames=[
+            daily_aggregated_filename,
+            by_average_filename
+        ]
+    )
 
 
 # http://localhost:8000/docs
