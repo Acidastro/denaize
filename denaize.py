@@ -25,7 +25,6 @@ def _create_df_well(df, file_name):
     df_well['Y-m'] = df_well['Y-m'].astype(str) + '-' + \
                      df_well['Month'].astype(str)
 
-    # убираем привязку к UTC из индекса
     df_well.index = df_well.index.tz_localize(None)
 
     return df_well
@@ -64,7 +63,7 @@ def _get_dataframe_from_bytes(
 
     df['Скважина'] = df['Скважина'].astype(str)
 
-    if list_wells is not None:
+    if len(list_wells[0]) > 0:
         df = df[df['Скважина'].isin(list_wells)]
 
     return df
