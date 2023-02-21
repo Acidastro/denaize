@@ -6,14 +6,6 @@ from denaize import response_zip, create_files
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 @app.post("/")
 async def upload_excel_file(
