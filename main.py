@@ -57,6 +57,6 @@ async def upload_excel_file(
 
 
 # http://localhost:8000/docs
-
-if __name__ == '__main__':
-    uvicorn.run(app, host='127.0.0.1', port=8000)
+#
+# if __name__ == '__main__':
+#     uvicorn.run(app, host='127.0.0.1', port=8000)

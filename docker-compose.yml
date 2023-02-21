@@ -1,7 +1,10 @@
-version: '3'
+version: '3.3'
 
 services:
   app:
-    build: .
+    container_name: NoiseRemover
+    build:
+        context: .
+    command: gunicorn --bind 0.0.0.0:10000 main:app --worker-class uvicorn.workers.UvicornWorker
     ports:
-      - "8000:8000"
+      - "10000:10000"

@@ -73,6 +73,7 @@ def _decompose_wells(df_well):
     """
     Добавляет колонку trend_sesonialclean
     :param df_well: DataFrame, в котором индексы (Y-m-d)
+    :return: df_well с новой колонкой trend_sesonialclean
     """
     try:
         series = df_well[['Обводненность(объемная)']]
